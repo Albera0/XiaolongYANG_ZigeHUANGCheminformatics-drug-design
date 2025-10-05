@@ -1,5 +1,6 @@
 import Read_Data as rd
 import Preprocess as prep
+from Draw_Figure import PredictedTrue
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestRegressor
@@ -39,7 +40,7 @@ def TrainModel(model, X_train, y_train, X_test, y_test):
 
 #Random Forest Function, use function so can evaluate fueatures from
 #fingerprint/molecular descriptors
-def RandomForest(features):
+def RandomForest(features, featurization):
     #Dataset split
     X = features
     #Training data o.8 and test data size 0.2
@@ -71,8 +72,8 @@ def RandomForest(features):
     #Cross-Validation and Hyperparameter Optimization
     #Hyperparameter
     param_grid = {
-        'n_estimators': [ 30, 40, 50, 70, 100, 120],
-        'max_depth': [ 30, 40, 50, 70, 100, 120]
+        'n_estimators': [100, 150, 200, 250],
+        'max_depth': [100, 150, 200, 250]
     }
 
     #Use 5-folds cross validation
@@ -89,21 +90,24 @@ def RandomForest(features):
     print('Best paramters: ', grid_search.best_params_)
     print('Random forests performance after hyperparamter optimization:')
     TrainModel(rf_gs, X_train, y_train, X_test, y_test)
+
+    #visualization of the training results
+    y_pred = rf_gs.predict(X_test)
+    PredictedTrue(y_test, y_pred, featurization)
     
 #Model training on different feaures
-
-RandomForest(sel_fingerprint) 
+RandomForest(sel_fingerprint, "Fingerprint") 
 #RMSE on train set: 0.373, and test set: 0.850.
-#Best paramters:  {'max_depth': 100, 'n_estimators': 120}
+# Best paramters:  {'max_depth': 100, 'n_estimators': 250}
 # Random forests performance after hyperparamter optimization:
-# RMSE on train set: 0.314, and test set: 0.813.
+# RMSE on train set: 0.310, and test set: 0.811.
 print("Result of fingerprint above.")
 
-RandomForest(sel_features) 
+RandomForest(sel_features, "Molecular_Descriptors") 
 #RMSE on train set: 0.320, and test set: 0.756.
-# Best paramters:  {'max_depth': 40, 'n_estimators': 120}
+# Best paramters:  {'max_depth': 100, 'n_estimators': 250}
 # Random forests performance after hyperparamter optimization:
-# RMSE on train set: 0.262, and test set: 0.717.
+# RMSE on train set: 0.258, and test set: 0.714.
 print("Result of molecular descriptors above.")
 
 
