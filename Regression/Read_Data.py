@@ -1,6 +1,5 @@
 import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import rdFingerprintGenerator
 
 
 #Data loading function
@@ -28,7 +27,7 @@ def DataRead() :
 lipo_df, smiles_list, y = DataRead()
 
 #Canonicalization of the smiles
-def canonicalize_smiles(smiles):
+def CanonicalizeSmiles(smiles):
     #Take a non-canonical SMILES and returns the canonical version
 
     #create a mol object from input smiles
@@ -39,14 +38,6 @@ def canonicalize_smiles(smiles):
 
     return canonical_smiles
 
-#create a new list by applying your function to list of non-canonical SMILES
-canonical_smiles = [canonicalize_smiles(smiles) for smiles in smiles_list]
+#create a new list  to list of non-canonical SMILES
+canonical_smiles = [CanonicalizeSmiles(smiles) for smiles in smiles_list]
 
-
-def Fingerprint():
-    # Create a fingerprint generator and select the Morgan Fingerprint with
-    # radius 2 and 2048 dimensions
-    mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2,fpSize=2048)
-
-    #Create the fingerprint
-    
