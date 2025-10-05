@@ -56,7 +56,9 @@ def FeatSelection(features):
     #Removed all zero-variance features
     selector = VarianceThreshold(threshold=0.0)
     features = selector.fit_transform(features)
-    print("Number of molecular descriptors after removing zero-variance features: ",
+    print("Number of fratures after removing zero-variance features: ",
         features.shape[1])
+    
+    return features
 
 sel_feature = FeatSelection(features)
