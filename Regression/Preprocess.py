@@ -5,6 +5,13 @@ from deepchem.feat import RDKitDescriptors
 from sklearn.feature_selection import VarianceThreshold
 import Read_Data
 
+from tqdm import tqdm
+import torch
+from ogb.utils import smiles2graph
+from torch_geometric.data import Data
+
+
+##Preprocess for the Random Forests
 #Load the dataset
 lipo_df, smiles_list, y = Read_Data.DataRead()
 
@@ -62,3 +69,28 @@ def FeatSelection(features):
     return features
 
 sel_feature = FeatSelection(features)
+
+
+##Preprocess for the Graph Convolutional Model
+def GraphFeature(canonical_smiles, y):
+        # load raw data from a csv file
+        smiles = canonical_smiles
+        target = y
+
+        # Convert SMILES into graph data
+        print('Converting SMILES strings into graphs...')
+        data_list = []
+        for i, smi in enumerate(tqdm(smiles)):
+
+            # get graph data from SMILES
+            graph = smiles2graph(smi)
+
+            # convert to tensor and pyg data
+            x = torch.tensor(graph['node_feat'], dtype=torch.long)
+            edge_index = torch.tensor(graph['edge_index'], dtype=torch.long)
+            edge_attr = torch.tensor(graph['edge_feat'], dtype=torch.long)
+            y = torch.tensor([target[i]], dtype=torch.float)
+            data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
+            data_list.append(data)
+
+        return data_list

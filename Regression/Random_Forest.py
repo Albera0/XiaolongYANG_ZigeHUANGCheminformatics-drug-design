@@ -91,19 +91,19 @@ def RandomForest(features, featurization):
     print('Random forests performance after hyperparamter optimization:')
     TrainModel(rf_gs, X_train, y_train, X_test, y_test)
 
-    #visualization of the training results
+    #Visualization of the training results
     y_pred = rf_gs.predict(X_test)
     PredictedTrue(y_test, y_pred, featurization)
     
 #Model training on different feaures
-RandomForest(sel_fingerprint, "Fingerprint") 
+RandomForest(sel_fingerprint, "RF_Fingerprint") 
 #RMSE on train set: 0.373, and test set: 0.850.
 # Best paramters:  {'max_depth': 100, 'n_estimators': 250}
 # Random forests performance after hyperparamter optimization:
 # RMSE on train set: 0.310, and test set: 0.811.
 print("Result of fingerprint above.")
 
-RandomForest(sel_features, "Molecular_Descriptors") 
+RandomForest(sel_features, "RF_Molecular_Descriptors") 
 #RMSE on train set: 0.320, and test set: 0.756.
 # Best paramters:  {'max_depth': 100, 'n_estimators': 250}
 # Random forests performance after hyperparamter optimization:
