@@ -33,7 +33,7 @@ class MPNN(pl.LightningModule):
     def __init__(self, hidden_dim, out_dim,
                 train_data, valid_data, test_data,
                 std, batch_size=32, lr=1e-3, 
-                dropout=0.1,num_layers=3,):
+                dropout=0.1):
         
         super().__init__()
         self.std = std  # std of data's target
@@ -43,7 +43,6 @@ class MPNN(pl.LightningModule):
         self.batch_size = batch_size
         self.lr = lr
         self.dropout = dropout
-        self.num_layers = num_layers
 
         # Initial layers
         self.atom_emb = AtomEncoder(emb_dim=hidden_dim)
@@ -70,8 +69,11 @@ class MPNN(pl.LightningModule):
             x, h = self.gru(m.unsqueeze(0), h)  # node update
             x = x.squeeze(0)
 
-            #Adding dropout and skip connection
-            #x = x + x_new
+            # x_new, h = self.gru(m.unsqueeze(0), h)  # node update
+            # x_new = x_new.squeeze(0)
+
+            # # Adding dropout and skip connection
+            # x = x + x_new
             # if mode == "train":
             #     x = F.dropout(x, p=self.dropout, training=self.training)
 
@@ -148,8 +150,8 @@ gnn_model = MPNN(
     train_data=train_dataset,
     valid_data=valid_dataset,
     test_data=test_dataset,
-    lr=1e-4,
-    batch_size=32,
+    lr=1e-3,
+    batch_size=64,
     dropout=0.1
 )
 
@@ -159,8 +161,8 @@ print(gnn_model)
 #Ask GPT to record losses
 logger = CSVLogger("logs", name="mpnn_experiment")
 
-#Training the model with expoch = 100
-trainer = pl.Trainer(max_epochs = 200, logger=logger)
+#Training the model
+trainer = pl.Trainer(max_epochs = 100, logger=logger)
 trainer.fit(model=gnn_model)
 
 # Load metrics from CSV
@@ -199,34 +201,3 @@ test_mse = results[0]["Test MSE"]
 test_rmse = test_mse ** 0.5
 print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
 
-#Result
-""" With epoches = 100, learn rate = 1e-3, hidden_dim=64, batch_size=64
-    Test MSE: 0.3616248369216919, RMSE on test set = 0.6014
-
-    With epoches = 100, learn rate = 1e-3, hidden_dim=64, batch_size=64, 
-    Adding dropout
-    Test MSE: 0.4491700232028961 , RMSE on test set =0.6702
-
-    With epoches = 100, learn rate = 1e-4, hidden_dim=64, batch_size=32, 
-    Adding dropout
-    Test MSE: 0.5232871174812317 , RMSE on test set =0.7234
-
-    With epoches = 100, learn rate = 1e-4, hidden_dim=64, batch_size=32, 
-    Adding dropout and skip commection
-    Test MSE:  0.37833163142204285 , RMSE on test set =0.6151
-
-    With epoches = 100, learn rate = 1e-4, hidden_dim=64, batch_size=32, 
-    Adding skip commection
-    Test MSE:  0.3679703176021576 , RMSE on test set =0.6066
-
-    With epoches = 200, learn rate = 1e-4, hidden_dim=64, batch_size=32, 
-    Test MSE:  0.4360988736152649, RMSE on test set =0.6604
-
-    With epoches = 200, learn rate = 1e-4, hidden_dim=64, batch_size=32, 
-    Addingskip commection
-    Test MSE:  0.38686564564704895, RMSE on test set =0.6220
-
-    With epoches = 200, learn rate = 1e-4, hidden_dim=64, batch_size=32, 
-    Adding dropout and skip commection
-    Test MSE:  0.3021673262119293, RMSE on test set =0.5497
-"""

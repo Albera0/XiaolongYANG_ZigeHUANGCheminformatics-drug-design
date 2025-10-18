@@ -45,7 +45,7 @@ def TrainModel(model, X_train, y_train, X_test, y_test):
 def RandomForest(features, featurization):
     #Dataset split
     X = features
-    #Training data o.8 and test data size 0.2
+    #Training data 0.8 and test data size 0.2
     #Fixed seed using the random state
     X_train, X_test, y_train, y_test = train_test_split(
     X, y, train_size=0.8, random_state=0)
