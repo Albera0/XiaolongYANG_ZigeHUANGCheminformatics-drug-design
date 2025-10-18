@@ -1,3 +1,5 @@
+import sys 
+sys.path.append(".") 
 import Read_Data as rd
 import Preprocess as prep
 from Draw_Figure import PredictedTrue
@@ -72,8 +74,8 @@ def RandomForest(features, featurization):
     #Cross-Validation and Hyperparameter Optimization
     #Hyperparameter
     param_grid = {
-        'n_estimators': [100, 150, 200, 250],
-        'max_depth': [100, 150, 200, 250]
+        'n_estimators': [3, 5, 7, 10, 20, 30, 50],
+        'max_depth': [3, 5, 7, 10, 20, 30, 50]
     }
 
     #Use 5-folds cross validation
@@ -97,17 +99,21 @@ def RandomForest(features, featurization):
     
 #Model training on different feaures
 RandomForest(sel_fingerprint, "RF_Fingerprint") 
-#RMSE on train set: 0.373, and test set: 0.850.
-# Best paramters:  {'max_depth': 100, 'n_estimators': 250}
-# Random forests performance after hyperparamter optimization:
-# RMSE on train set: 0.310, and test set: 0.811.
 print("Result of fingerprint above.")
 
 RandomForest(sel_features, "RF_Molecular_Descriptors") 
-#RMSE on train set: 0.320, and test set: 0.756.
-# Best paramters:  {'max_depth': 100, 'n_estimators': 250}
-# Random forests performance after hyperparamter optimization:
-# RMSE on train set: 0.258, and test set: 0.714.
 print("Result of molecular descriptors above.")
 
+"""Result
+Result of fingerprint
+RMSE on train set: 0.373, and test set: 0.850.
+Best paramters:  {'max_depth': 50, 'n_estimators': 50}
+Random forests performance after hyperparamter optimization:
+RMSE on train set: 0.346, and test set: 0.821.
 
+Result of molecular descriptors
+RMSE on train set: 0.320, and test set: 0.756.
+Best paramters:  {'max_depth': 50, 'n_estimators': 50}
+Random forests performance after hyperparamter optimization:
+RMSE on train set: 0.270, and test set: 0.723.
+"""
