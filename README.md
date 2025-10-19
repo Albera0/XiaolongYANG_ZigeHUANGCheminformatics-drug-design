@@ -17,8 +17,11 @@ The result visualization module includes commonly used plots comparing predicted
 
 ### Instructions for Use
 1.Place your database in the **Dataset** folder.
+
 2.Modify the data reading path for **lipo_df** in the **DataRead** function of the **Read_Data** file, and update **smiles** and **y** to correspond to the column names for molecular SMILES and training data in your database.
+
 3.To perform Random Forest prediction, run the **Random_Forests** file in the **Regression** folder. The visualization results will be saved in the **Figure** folder.
+
 4.To perform Message Passing Neural Network prediction, run the **Graph_Convolutional_Model** file in the **Regression** folder. The visualization results will be saved in the **Figure** folder.
 
 
