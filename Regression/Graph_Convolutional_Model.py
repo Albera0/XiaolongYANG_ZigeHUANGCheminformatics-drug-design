@@ -1,19 +1,22 @@
+import sys 
+sys.path.append(".") 
 import Read_Data as rd
 from Preprocess import GraphFeature
+import Draw_Figure as drf
 import torch
 import torch.nn.functional as F
 from torch.nn import GRU
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import NNConv, MLP, global_add_pool
 from ogb.graphproppred.mol_encoder import AtomEncoder, BondEncoder
 import numpy as np
-
+from pytorch_lightning.loggers import CSVLogger
+import pandas as pd
 
 #Data Loading
 lipo_df, smiles_list, y = rd.DataRead()
-
+print(y[:10])
 #create a new list  to list of non-canonical SMILES
 canonical_smiles = [rd.CanonicalizeSmiles(smiles) for smiles in smiles_list]
 
@@ -29,7 +32,8 @@ mean, std = mean.item(), std.item()
 class MPNN(pl.LightningModule):
     def __init__(self, hidden_dim, out_dim,
                 train_data, valid_data, test_data,
-                std, batch_size=32, lr=1e-3):
+                std, batch_size=32, lr=1e-3, 
+                dropout=0.1):
         
         super().__init__()
         self.std = std  # std of data's target
@@ -38,6 +42,7 @@ class MPNN(pl.LightningModule):
         self.test_data = test_data
         self.batch_size = batch_size
         self.lr = lr
+        self.dropout = dropout
 
         # Initial layers
         self.atom_emb = AtomEncoder(emb_dim=hidden_dim)
@@ -64,6 +69,14 @@ class MPNN(pl.LightningModule):
             x, h = self.gru(m.unsqueeze(0), h)  # node update
             x = x.squeeze(0)
 
+            # x_new, h = self.gru(m.unsqueeze(0), h)  # node update
+            # x_new = x_new.squeeze(0)
+
+            # # Adding dropout and skip connection
+            # x = x + x_new
+            # if mode == "train":
+            #     x = F.dropout(x, p=self.dropout, training=self.training)
+
         # Readout
         x = global_add_pool(x, data.batch)
         x = self.mlp(x)
@@ -74,14 +87,14 @@ class MPNN(pl.LightningModule):
         # Here we define the train loop.
         out = self.forward(batch, mode="train")
         loss = F.mse_loss(out, batch.y)
-        self.log("Train loss", loss)
+        self.log("Train loss", loss, on_epoch=True, on_step=False, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         # Define validation step. At the end of every epoch, this will be executed
         out = self.forward(batch, mode="valid")
         loss = F.mse_loss(out * self.std, batch.y * self.std)  # report MSE
-        self.log("Valid MSE", loss)
+        self.log("Valid MSE", loss, on_epoch=True, on_step=False, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         # What to do in test
@@ -138,15 +151,47 @@ gnn_model = MPNN(
     valid_data=valid_dataset,
     test_data=test_dataset,
     lr=1e-3,
-    batch_size=64
+    batch_size=64,
+    dropout=0.1
 )
 
 #Check the modelstructure
 print(gnn_model)
 
-#Training the model with expoch = 100
-trainer = pl.Trainer(max_epochs = 100)
+#Ask GPT to record losses
+logger = CSVLogger("logs", name="mpnn_experiment")
+
+#Training the model
+trainer = pl.Trainer(max_epochs = 100, logger=logger)
 trainer.fit(model=gnn_model)
+
+# Load metrics from CSV
+metrics_path = f"{logger.log_dir}/metrics.csv"
+metrics = pd.read_csv(metrics_path)
+metrics = metrics.groupby('epoch').last().reset_index()
+epochs = metrics['epoch']
+train_losses =  metrics['Train loss']
+valid_losses =  metrics['Valid MSE']
+
+#Check training & validation loss
+drf.LossVis(epochs, train_losses,  valid_losses,"MPNN")
+
+#Predicted and True values comperasion
+gnn_model.eval()
+y_true, y_pred = [], []
+
+for batch in gnn_model.test_dataloader():
+    with torch.no_grad():
+        #Predicted values
+        out = gnn_model(batch)
+        y_true.append(batch.y * gnn_model.std)
+        y_pred.append(out * gnn_model.std)
+
+y_true = torch.cat(y_true).cpu().numpy()
+y_pred = torch.cat(y_pred).cpu().numpy()
+
+#Draw figure
+drf.PredictedTrue(y_true, y_pred, "MPNN")
 
 #Test the model on the test set
 results = trainer.test(ckpt_path="best")

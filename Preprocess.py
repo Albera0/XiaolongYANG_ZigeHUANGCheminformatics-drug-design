@@ -8,7 +8,8 @@ import Read_Data
 from tqdm import tqdm
 import torch
 from ogb.utils import smiles2graph
-from torch_geometric.data import Data
+from torch_geometric.data import Data, InMemoryDataset
+import pandas as pd
 
 
 ##Preprocess for the Random Forests
@@ -72,10 +73,20 @@ sel_feature = FeatSelection(features)
 
 
 ##Preprocess for the Graph Convolutional Model
-def GraphFeature(canonical_smiles, y):
-        # load raw data from a csv file
-        smiles = canonical_smiles
-        target = y
+#Ask GPT how to pass my own dataset in the class
+class GraphFeature(InMemoryDataset):
+
+    def __init__(self, canonical_smiles, y_org, transform=None):
+        self.canonical_smiles = canonical_smiles
+        self.y_org = y_org
+        super().__init__('.', transform)
+        self.data, self.slices = self._process_in_memory()
+
+    def _process_in_memory(self):
+        #Builds Data directly in memory.
+        data_list = []
+        smiles = self.canonical_smiles
+        target = self.y_org
 
         # Convert SMILES into graph data
         print('Converting SMILES strings into graphs...')
@@ -93,4 +104,4 @@ def GraphFeature(canonical_smiles, y):
             data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
             data_list.append(data)
 
-        return data_list
+        return self.collate(data_list)
