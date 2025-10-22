@@ -13,19 +13,13 @@ class DatasetManager(Dataset):
         # locate SMILES
         self.smiles = self.data.iloc[:, 0].values
 
-        # canonicalize the SMILES
-        self.canonical_smiles = []
-        for s in self.smiles:
-            canonical = self.canonicalize_smiles(s)
-            if canonical is not None:  # filter invalid smiles
-                self.canonical_smiles.append(canonical)
-
         # filter invalid SMILES
         self.verbose = verbose
         self.canonical_smiles = []
         self.valid_indices = []  #
         invalid_count = 0
 
+        # canonicalize the SMILES
         for idx, s in enumerate(self.smiles):
             canonical = self.canonicalize_smiles(s)
             if canonical is not None:
@@ -54,15 +48,18 @@ class DatasetManager(Dataset):
     def __len__(self):
         return len(self.canonical_smiles)
 
-    def __getitem__(self,idx):
-        smiles = self.canonical_smiles[idx]
-        label = self.data.iloc[idx, 2]
-        return smiles,label
+    def __getitem__(self, idx):
+        real_idx = self.valid_indices[idx]  # Original index
+        smiles = self.canonical_smiles[idx]  # canonical SMILES
+        label = self.data.iloc[real_idx]['HIV_active']
+        return smiles, label
 
-def load_hiv_dataset(csv_path='C:\\Users\\Zoe\\Downloads\\HIV.csv'):
+
+def load_hiv_dataset(csv_path='Dataset/HIV.csv'):
     return DatasetManager(csv_path)
 
 
+# Debug the module on its own
 if __name__ == "__main__":
     dataset = load_hiv_dataset()
     print(dataset[0])
