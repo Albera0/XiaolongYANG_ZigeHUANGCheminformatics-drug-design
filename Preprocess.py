@@ -4,12 +4,16 @@ from rdkit.Chem import rdFingerprintGenerator
 from deepchem.feat import RDKitDescriptors
 from sklearn.feature_selection import VarianceThreshold
 import Read_Data
-
 from tqdm import tqdm
 import torch
 from ogb.utils import smiles2graph
 from torch_geometric.data import Data, InMemoryDataset
 import pandas as pd
+from rdkit import Chem
+from rdkit.Chem import rdFingerprintGenerator, AllChem
+from Read_Data import load_hiv_dataset
+from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
+from rdkit.Chem import PandasTools
 
 
 ##Preprocess for the Random Forests
@@ -105,3 +109,86 @@ class GraphFeature(InMemoryDataset):
             data_list.append(data)
 
         return self.collate(data_list)
+
+
+
+
+
+dataset = load_hiv_dataset('Dataset/HIV.csv')
+
+
+
+
+# Create fingerprint generators(radius 2 and 2048 dimensions)
+mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+rdkgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048)
+
+
+
+# Classical Fingerprints
+# Feature Morgan
+def Morgan_fingerprints(smiles_list, radius=2, nBits=1024):
+    fingerprints = []
+    invalid = 0
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        if mol is not None:
+            # generate RDKit ExplicitBitVect object(revised by AI)
+            fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=radius, nBits=nBits)
+            fingerprints.append(fp)
+        else:
+            invalid += 1
+    print(f"Filtered invalid SMILES: {invalid} / {len(smiles_list)}")
+    return fingerprints
+
+# RDkit
+def RDkit_fingerprints(smiles_list):
+
+    fingerprints = []
+
+    for s in smiles_list:  # string
+        mol = Chem.MolFromSmiles(s)
+        if mol is not None:
+            fp = rdkgen.GetFingerprint(mol)
+            fingerprints.append(fp.ToList())
+    return fingerprints
+
+
+
+#Molecular Desciptors
+def Molecular_Descriptors(dataset):
+    df = dataset.data.copy()
+    PandasTools.AddMoleculeColumnToFrame(df, smilesCol='smiles', molCol='Molecule')
+    df = df[df['Molecule'].notnull()].copy()
+
+    calculator = MolecularDescriptorCalculator([
+        'MolWt', 'NumHDonors', 'NumHAcceptors', 'NumRotatableBonds', 'TPSA'
+    ])
+    properties = df['Molecule'].apply(calculator.CalcDescriptors)
+    X = pd.DataFrame(properties.tolist(), columns=['MolWt', 'NumHDonors', 'NumHAcceptors', 'NumRotatableBonds', 'TPSA'])
+    X['HIV_active'] = df['HIV_active'].values
+    return X
+
+
+# Debug the module on its own
+if __name__ == "__main__":
+
+    # Compute Morgan fingerprints
+    fingerprints_morgan = Morgan_fingerprints(dataset.canonical_smiles)
+    print("Number of samples (Morgan):", len(fingerprints_morgan))
+    print("Fingerprint length (Morgan):", len(fingerprints_morgan[0]))
+    print(type(fingerprints_morgan[0]))
+
+    # Compute RDKit fingerprints
+    fingerprints_rdkit = RDkit_fingerprints(dataset.canonical_smiles)
+    print("Number of samples (RDKit):", len(fingerprints_rdkit))
+    print("Fingerprint length (RDKit):", len(fingerprints_rdkit[0]))
+
+    # Compute molecular descriptors
+    desc = Molecular_Descriptors(dataset)
+    print("Descriptors shape:", desc.shape)
+    print(desc.head())
+
+
+
+
