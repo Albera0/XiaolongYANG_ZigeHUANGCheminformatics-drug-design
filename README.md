@@ -49,7 +49,7 @@ The clusters are then put into more detalied analysis including Murcko scaffold,
 
 5.To perform Autoencoder + HDBSCAN, run the **Autoencoder** file in the **Clustering** folder. The visualization results will be saved in the **Figure** folder.
 
-6.Training logs are saved in the "logs\Autoencoder_experiment" folder. Checkpoints are saved in "Models".
+6.Training  are Checkpoints are saved in "Models".
 
 ## Main Contributors
 YANG Xiaolong and HUANG Zige are the main contributors to this project. Yang Xiaolong was mainly responsible for the regression analysis, while Huang Zige focused on the classification analysis. Data loading and preprocessing, as well as result visualization, were completed jointly by both.
