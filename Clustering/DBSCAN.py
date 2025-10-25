@@ -12,9 +12,8 @@ from feature_representation import Morgan_fingerprints, dataset, Molecular_Descr
 
 # Note: This process I use AI to encapsulate functions for improving readi
 
-# ============================================================================
+
 # 1: Morgan Fingerprint + DBSCAN (For Reference - High Noise)
-# ============================================================================
 # This method shows high noise ratio (~97%) due to computational
 # Kept it for comparison purposes.
 
@@ -136,9 +135,9 @@ class MorganFingerprintClustering:
         return self
 
 
-# ============================================================================
+
 # 2: Molecular Descriptors + DBSCAN (Recommended)
-# ============================================================================
+
 
 class MolecularDescriptorClustering:
 
@@ -346,7 +345,7 @@ class MolecularDescriptorClustering:
             self.visualize_clusters(cluster_activity, desc_means)
 
         self.evaluate_as_classifier()
-        print("\n✅ Molecular descriptor clustering completed successfully!\n")
+        print("\nMolecular descriptor clustering completed successfully!\n")
         return self
 
 
