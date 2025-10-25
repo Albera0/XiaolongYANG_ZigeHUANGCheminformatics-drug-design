@@ -3,50 +3,51 @@ from rdkit import Chem
 from torch.utils.data import Dataset
 
 
-#Data loading function
-def DataRead() :
-    #Read the data from Lipophilicity.csv
+# Data loading function
+def DataRead():
+    # Read the data from Lipophilicity.csv
     lipo_df = pd.read_csv('Dataset/Lipophilicity.csv')
     print("Lipophilicity Data: ", lipo_df.sample(3), "\n")
 
-    #Check if there is missing data
+    # Check if there is missing data
     print(lipo_df.isna().sum())
 
-    #Remove the missing data
-    lipo_df = lipo_df[lipo_df.isna().sum(1)==0]
+    # Remove the missing data
+    lipo_df = lipo_df[lipo_df.isna().sum(1) == 0]
     print(lipo_df.isna().sum())
 
-    #Get the smiles and octanol/water distribution coefficient
+    # Get the smiles and octanol/water distribution coefficient
     smiles = lipo_df['smiles'].values
-    y  = lipo_df['exp'].values
-    
-    #Check if the reading is finished
+    y = lipo_df['exp'].values
+
+    # Check if the reading is finished
     print("smiles data: ", smiles[:3], "\n")
     print("octanol/water distribution coefficient data: ", y[:3], "\n")
     return lipo_df, smiles, y
 
+
 lipo_df, smiles_list, y = DataRead()
 
-#Canonicalization of the smiles
-def CanonicalizeSmiles(smiles):
-    #Take a non-canonical SMILES and returns the canonical version
 
-    #create a mol object from input smiles
+# Canonicalization of the smiles
+def CanonicalizeSmiles(smiles):
+    # Take a non-canonical SMILES and returns the canonical version
+
+    # create a mol object from input smiles
     mol = Chem.MolFromSmiles(smiles)
 
-    #convert the previous mol object to SMILES using Chem.MolToSmiles()
+    # convert the previous mol object to SMILES using Chem.MolToSmiles()
     canonical_smiles = Chem.MolToSmiles(mol)
 
     return canonical_smiles
 
-#create a new list  to list of non-canonical SMILES
+
+# create a new list  to list of non-canonical SMILES
 canonical_smiles = [CanonicalizeSmiles(smiles) for smiles in smiles_list]
 
 
-
-
 class DatasetManager(Dataset):
-    def __init__(self,csv_path,verbose=True):
+    def __init__(self, csv_path, verbose=True):
         self.data = pd.read_csv(csv_path)
 
         # delete the missing data
@@ -86,7 +87,6 @@ class DatasetManager(Dataset):
             print(f"Error processing SMILES '{smiles}': {e}")
             return None
 
-
     def __len__(self):
         return len(self.canonical_smiles)
 
@@ -97,12 +97,10 @@ class DatasetManager(Dataset):
         return smiles, label
 
 
-
 class DatasetFilter:
     # new added for filtering and balance the data in case of RAM runout
 
     def __init__(self, dataset):
-
         self.dataset = dataset
         self.df = dataset.data.copy()
 
@@ -140,9 +138,6 @@ class DatasetFilter:
         print(f"[INFO] Dataset summary: {total} samples")
         for label, count in counts.items():
             print(f"    Label {label}: {count} ({count / total * 100:.2f}%)")
-
-
-
 
 
 def load_hiv_dataset(csv_path='Dataset/HIV.csv'):
